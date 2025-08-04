@@ -899,7 +899,13 @@
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js';
             script.onload = () => {
                 if (typeof ethers !== 'undefined') {
-                    connectWallet(); 
+                    // Check if MetaMask is already connected
+                    if (window.ethereum && window.ethereum.isConnected()) {
+                        connectWallet(); // Attempt immediate connection if already connected
+                    } else {
+                        gameMessage.textContent = 'Wallet not connected. Click "New Game" to connect.';
+                    }
+
                     // Listen for account or network changes in MetaMask
                     if (typeof window.ethereum !== 'undefined') {
                         window.ethereum.on('accountsChanged', (accounts) => {
