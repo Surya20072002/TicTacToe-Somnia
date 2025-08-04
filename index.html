@@ -417,7 +417,7 @@
          */
         function initializeGame() {
             board = ['', '', '', '', '', '', '', '', ''];
-            currentPlayer = 'X'; // User always starts
+            currentPlayer = 'X'; // 'X' for user, 'O' for AI
             gameActive = true;
             gameMessage.textContent = `Player X's turn (You). Current bet: ${currentBet === 0 ? 'Free' : currentBet + ' STT'}.`;
             
@@ -698,6 +698,13 @@
          * @returns {Promise<boolean>} - True if connection and network switch are successful, false otherwise.
          */
         async function connectWallet() {
+            // Ensure ethers is defined before proceeding
+            if (typeof ethers === 'undefined') {
+                gameMessage.textContent = 'Error: Ethers.js not loaded. Please try refreshing.';
+                console.error('Ethers.js is not defined. Cannot connect wallet.');
+                return false;
+            }
+
             if (typeof window.ethereum === 'undefined') {
                 gameMessage.textContent = 'MetaMask is not installed. Please install it to play.';
                 gameActive = false;
@@ -888,7 +895,8 @@
             }
 
             const script = document.createElement('script');
-            script.src = 'https://cdn.ethers.io/lib/ethers-5.7.umd.min.js';
+            // Changed Ethers.js CDN URL to a more reliable one
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js';
             script.onload = () => {
                 if (typeof ethers !== 'undefined') {
                     connectWallet(); 
