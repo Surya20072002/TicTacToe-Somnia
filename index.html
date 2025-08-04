@@ -6,8 +6,7 @@
     <title>Somnia Tic Tac Toe</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Ethers.js CDN for wallet connection and contract interaction -->
-    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+    <!-- Ethers.js CDN is now dynamically loaded by JavaScript -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -105,7 +104,7 @@
     <div class="game-container">
         <h1 class="text-4xl font-extrabold mb-6 text-yellow-400">Somnia Tic Tac Toe</h1>
 
-        <div id="gameMessage" class="message-box">Connect your wallet to start a new game!</div>
+        <div id="gameMessage" class="message-box">Connecting wallet...</div>
 
         <div class="flex flex-col items-center w-full mb-6 p-4 bg-gray-700 rounded-lg shadow-inner">
             <!-- Wallet Balance on the first line -->
@@ -402,7 +401,6 @@
         // DOM elements
         const cells = document.querySelectorAll('.cell');
         const gameMessage = document.getElementById('gameMessage');
-        // Removed simulatedBalanceDisplay as it's no longer needed for display
         const walletBalanceDisplay = document.getElementById('walletBalanceDisplay'); 
         const newGameButton = document.getElementById('newGameButton');
         const betButtons = document.querySelectorAll('.bet-button');
@@ -422,7 +420,6 @@
             currentPlayer = 'X'; // User always starts
             gameActive = true;
             gameMessage.textContent = `Player X's turn (You). Current bet: ${currentBet === 0 ? 'Free' : currentBet + ' STT'}.`;
-            // Removed updateSimulatedBalanceDisplay() call
             
             // Clear cell content and classes
             cells.forEach(cell => {
@@ -430,14 +427,6 @@
                 cell.classList.remove('x', 'o', 'occupied');
                 cell.addEventListener('click', handleCellClick, { once: true }); // Re-add event listener
             });
-        }
-
-        /**
-         * Updates the simulated in-game balance display on the UI.
-         * This function is now internal and not tied to a display element.
-         */
-        function updateSimulatedBalanceDisplay() {
-            // simulatedBalanceDisplay.textContent = `${simulatedBalance.toFixed(3)} STT`; // Removed display update
         }
 
         /**
@@ -480,11 +469,9 @@
             if (checkWin()) {
                 gameMessage.textContent = `Congratulations! You (X) won! You get ${currentBet === 0 ? 'nothing extra' : (currentBet * 2).toFixed(3) + ' STT'}!`;
                 if (currentBet > 0) {
-                    simulatedBalance += (currentBet * 2); // Update simulated balance
                     // In a real dApp, the contract owner would call declareOutcome(userAddress, "win") here
                     // declareGameOutcome(userAddress, "win"); // This would be called by the contract owner
                 }
-                // Removed updateSimulatedBalanceDisplay() call
                 gameActive = false;
                 disableCells();
                 return;
@@ -493,11 +480,9 @@
             if (checkDraw()) {
                 gameMessage.textContent = `It's a draw! Your bet of ${currentBet === 0 ? 'Free' : currentBet + ' STT'} is returned.`;
                 if (currentBet > 0) {
-                    simulatedBalance += currentBet; // Update simulated balance
                     // In a real dApp, the contract owner would call declareOutcome(userAddress, "draw") here
                     // declareGameOutcome(userAddress, "draw"); // This would be called by the contract owner
                 }
-                // Removed updateSimulatedBalanceDisplay() call
                 gameActive = false;
                 disableCells();
                 return;
@@ -618,11 +603,9 @@
             if (checkDraw()) {
                 gameMessage.textContent = `It's a draw! Your bet of ${currentBet === 0 ? 'Free' : currentBet + ' STT'} is returned.`;
                 if (currentBet > 0) {
-                    simulatedBalance += currentBet; // Update simulated balance
                     // In a real dApp, the contract owner would call declareOutcome(userAddress, "draw") here
                     // declareGameOutcome(userAddress, "draw"); // This would be called by the contract owner
                 }
-                // Removed updateSimulatedBalanceDisplay() call
                 gameActive = false;
                 disableCells();
                 return;
@@ -642,10 +625,8 @@
             // Check for game outcome after AI's move
             if (checkWin()) {
                 gameMessage.textContent = `AI (O) won! You lost your bet of ${currentBet === 0 ? 'Free' : currentBet + ' STT'}.`;
-                // Simulated balance already deducted at start, no further action needed for loss
                 // In a real dApp, the contract owner would call declareOutcome(userAddress, "lose") here
                 // declareGameOutcome(userAddress, "lose"); // This would be called by the contract owner
-                // Removed updateSimulatedBalanceDisplay() call
                 gameActive = false;
                 disableCells();
                 return;
@@ -654,11 +635,9 @@
             if (checkDraw()) {
                 gameMessage.textContent = `It's a draw! Your bet of ${currentBet === 0 ? 'Free' : currentBet + ' STT'} is returned.`;
                 if (currentBet > 0) {
-                    simulatedBalance += currentBet; // Update simulated balance
                     // In a real dApp, the contract owner would call declareOutcome(userAddress, "draw") here
                     // declareGameOutcome(userAddress, "draw"); // This would be called by the contract owner
                 }
-                // Removed updateSimulatedBalanceDisplay() call
                 gameActive = false;
                 disableCells();
                 return;
@@ -858,4 +837,91 @@
         async function declareGameOutcome(playerAddress, outcome) {
             console.log(`Simulating outcome declaration for ${playerAddress}, outcome: ${outcome}`);
             console.log("In a real dApp, the contract owner would call ticTacToeContract.declareOutcome(playerAddress, outcome) here.");
-            // Example of how it *would* be called if the client was the own
+            // Example of how it *would* be called if the client was the owner:
+            /*
+            if (!ticTacToeContract) {
+                console.error("Contract not initialized.");
+                return;
+            }
+            try {
+                const tx = await ticTacToeContract.declareOutcome(playerAddress, outcome);
+                console.log(`Declaring outcome transaction sent: ${tx.hash}`);
+                await tx.wait();
+                console.log("Outcome declared and payout processed on blockchain.");
+                updateWalletBalanceDisplay(); // Update wallet balance after payout
+            } catch (error) {
+                console.error("Error declaring outcome on contract:", error);
+            }
+            */
+        }
+
+
+        // Event Listeners
+        newGameButton.addEventListener('click', async () => {
+            const connected = await connectWallet();
+            if (connected) {
+                // Only attempt to place bet if a bet is selected (not free)
+                if (currentBet > 0) {
+                    const betSuccessful = await placeBetOnContract(currentBet);
+                    if (betSuccessful) {
+                        initializeGame();
+                    }
+                } else { // If Free game, just initialize
+                    initializeGame();
+                }
+            }
+        });
+
+        betButtons.forEach(button => {
+            button.addEventListener('click', handleBetSelection);
+        });
+
+        // Dynamically load Ethers.js and then initialize the game logic
+        document.addEventListener('DOMContentLoaded', () => {
+            betButtons[0].click(); // Simulate click on "Free" bet button
+            gameMessage.textContent = 'Connecting wallet...'; // Initial message
+            
+            // Remove the static Ethers.js script tag from HTML head as it's loaded dynamically now
+            const staticEthersScript = document.querySelector('script[src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"]');
+            if (staticEthersScript) {
+                staticEthersScript.remove();
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://cdn.ethers.io/lib/ethers-5.7.umd.min.js';
+            script.onload = () => {
+                if (typeof ethers !== 'undefined') {
+                    connectWallet(); 
+                    // Listen for account or network changes in MetaMask
+                    if (typeof window.ethereum !== 'undefined') {
+                        window.ethereum.on('accountsChanged', (accounts) => {
+                            if (accounts.length > 0) {
+                                userAddress = accounts[0];
+                                updateWalletBalanceDisplay();
+                                gameMessage.textContent = `Wallet connected: ${userAddress.substring(0, 6)}...${userAddress.substring(userAddress.length - 4)}. Select your bet and click New Game.`;
+                            } else {
+                                userAddress = null;
+                                updateWalletBalanceDisplay();
+                                gameMessage.textContent = 'Wallet disconnected. Please connect to play.';
+                            }
+                        });
+                        window.ethereum.on('chainChanged', (chainId) => {
+                            console.log('Chain changed to:', chainId);
+                            connectWallet(); // Re-run connection logic to ensure correct network
+                        });
+                    }
+                } else {
+                    gameMessage.textContent = 'Error: Ethers.js loaded but not defined. Try refreshing.';
+                    console.error("Ethers.js is not defined after loading.");
+                }
+            };
+            script.onerror = () => {
+                gameMessage.textContent = 'Error: Failed to load Ethers.js. Please check your internet connection.';
+                console.error('Failed to load script:', script.src);
+            };
+            document.head.appendChild(script);
+        });
+
+    </script>
+</body>
+</html>
